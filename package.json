@@ -1,0 +1,25 @@
+{
+  "name": "node-keyboard-github",
+  "version": "1.0.0",
+  "description": "GitHub search plugin for node-keyboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint ."
+  },
+  "keywords": [
+    "node-keyboard-github"
+  ],
+  "author": "justin j. moses <justinjmoses@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/justinjmoses/node-keyboard-github",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "dependencies": {
+    "octonode": "^0.7.12",
+    "satori-sdk-js": "^1.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^3.9.1"
+  }
+}
