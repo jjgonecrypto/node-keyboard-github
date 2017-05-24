@@ -5,7 +5,8 @@ const RTM = require("satori-sdk-js")
 const octonode = require('octonode')
 const chalk = require('chalk')
 const util = require('util')
-
+const path = require('path')
+const examples = require('node-examples')
 const Rx = require('node-keyboard-rx')()
 
 function subscribeToGithubStars() {
@@ -81,5 +82,25 @@ const github = module.exports = {
             .do(({ user, repo }) => console.log(chalk.grey(`User: ${chalk.white(user)} Repo: ${chalk.yellow(repo)}`)))
             // .do(console.log)
             .do(({ languages }) => console.log(chalk.grey(util.inspect(languages))))
+    },
+
+    sourceSearch(query) {
+        const client = octonode.client(process.env.GITHUB_ACCESS_TOKEN)
+
+        return github.starred()
+            .concatMap(({ user, repo }) => {
+                const context = client.search()
+                return Rx.Observable.forkJoin(
+                    Rx.Observable.of({ user, repo }),
+                    Rx.Observable.bindNodeCallback(context.code.bind(context))({
+                        q: `${query}+repo:${repo}`,
+                        sort: 'created',
+                        order: 'asc'
+                    })
+                )
+            })
+            .do(console.log)
     }
 }
+
+examples({ path: path.join(__dirname, 'examples'), prefix: 'github_example_' })
