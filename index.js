@@ -3,8 +3,7 @@
 const RTM = require("satori-sdk-js")
 
 const octonode = require('octonode')
-const chalk = require('chalk')
-const util = require('util')
+
 const path = require('path')
 const examples = require('node-examples')
 const Rx = require('node-keyboard-rx')()
@@ -24,36 +23,8 @@ function subscribeToGithubStars() {
     return Rx.Observable.fromEvent(subscription, 'rtm/subscription/data').finally(() => rtm.stop())
 }
 
-
-// subscription.on('rtm/subscription/data', function (pdu) {
-//     pdu.body.messages
-//     .map(msg => { return { user: msg.actor.login, repo: msg.repo.name } })
-//     .filter(({ user, repo }) => {
-//         if (foundStars.indexOf(user+repo) > -1 ) return false
-//         foundStars.push(user+repo)
-//         return true
-//     })
-//     .forEach(({ user, repo }) => {
-//         client.repo(repo).languages((err, langs) => {
-//             client.search().code({
-//                 q: `mongodb+repo:${repo}`,
-//                 sort: 'created',
-//                 order: 'asc'
-//             }, (err, { items = [] } = {}) => {
-//                 console.log(user, repo)
-//                 console.log('Languages: ', langs)
-//                 if (items.length) console.log('MongoDB found', items[0].html_url)
-//                 else if (err) console.error(err)
-//                 console.log('----')
-//             })
-//         })
-//     })
-// })
-
-
-
 const github = module.exports = {
-    starred() {
+    _starred() {
         const starred = subscribeToGithubStars()
         const foundStars = []
 
@@ -67,10 +38,10 @@ const github = module.exports = {
             })
     },
 
-    languageStarred(language = 'JavaScript') {
+    starredRepos() {
         const client = octonode.client(process.env.GITHUB_ACCESS_TOKEN)
 
-        return github.starred()
+        return github._starred()
             .concatMap(({ user, repo }) => {
                 const context = client.repo(repo)
                 return Rx.Observable.forkJoin(
@@ -78,16 +49,22 @@ const github = module.exports = {
                     Rx.Observable.bindNodeCallback(context.languages.bind(context))()
                 )
             })
-            .map(([{ user, repo }, [ languages ]]) => { return { user, repo, languages } })
-            .do(({ user, repo }) => console.log(chalk.grey(`User: ${chalk.white(user)} Repo: ${chalk.yellow(repo)}`)))
-            // .do(console.log)
-            .do(({ languages }) => console.log(chalk.grey(util.inspect(languages))))
+            .map(([{ user, repo }, [ languages ]]) => {
+                const sum = Object.keys(languages).reduce((acc, key) => {
+                    return acc + languages[key]
+                }, 0)
+                languages = Object.keys(languages).reduce((acc, key) => {
+                    acc[key] = languages[key] / sum
+                    return acc
+                }, {})
+                return { user, repo, languages }
+            })
     },
 
     sourceSearch(query) {
         const client = octonode.client(process.env.GITHUB_ACCESS_TOKEN)
 
-        return github.starred()
+        return github._starred()
             .concatMap(({ user, repo }) => {
                 const context = client.search()
                 return Rx.Observable.forkJoin(
@@ -99,8 +76,10 @@ const github = module.exports = {
                     })
                 )
             })
-            .do(console.log)
+            .map(([{ user, repo }, [ { items } ]]) => {
+                return { user, repo, items }
+            })
     }
 }
 
-examples({ path: path.join(__dirname, 'examples'), prefix: 'github_example_' })
+examples({ path: path.join(__dirname, 'examples'), prefix: 'github_example_', cache: false })

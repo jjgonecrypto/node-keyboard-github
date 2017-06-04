@@ -25,4 +25,12 @@ The following environment variables need to be added:
 * `SATORI_ACCESS_TOKEN` see [https://developer.satori.com](https://developer.satori.com)
 * `GITHUB_ACCESS_TOKEN` see [GitHub docs](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/#creating-a-token)
 
+## API
+
+* `starredRepos()` returns a subscription with `{ user, repository, languages }` for every public star action on GitHub
+* `sourceSearch(query: String)` returns a subscription with `{ user, repository, items }` for every public star action on GitHub for a repository containing the given `query`
+
 ## Examples
+
+* [starred repositories by language](./examples/01_starredlangs.js)
+* [search content from starred repositories](./examples/02_starredcontent.js)
